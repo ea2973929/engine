@@ -573,6 +573,22 @@ void PopulateSnapshotMappingCallbacks(const FlutterProjectArgs* args,
 #endif  // !OS_FUCHSIA && (FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG)
 }
 
+void PopulateICUMappingCallback(const FlutterProjectArgs* args,
+                                flutter::Settings& settings) {
+  // There are no ownership concerns here as all mappings are owned by the
+  // embedder and not the engine.
+  auto make_mapping_callback = [](const uint8_t* mapping, size_t size) {
+    return [mapping, size]() {
+      return std::make_unique<fml::NonOwnedMapping>(mapping, size);
+    };
+  };
+
+  if (SAFE_ACCESS(args, icu_data, nullptr) != nullptr) {
+    settings.icu_mapper = make_mapping_callback(
+      args->icu_data, SAFE_ACCESS(args, icu_data_size, 0));
+  }
+}
+
 FlutterEngineResult FlutterEngineRun(size_t version,
                                      const FlutterRendererConfig* config,
                                      const FlutterProjectArgs* args,
@@ -660,8 +676,10 @@ FlutterEngineResult FlutterEngineInitialize(size_t version,
   flutter::Settings settings = flutter::SettingsFromCommandLine(command_line);
 
   PopulateSnapshotMappingCallbacks(args, settings);
+  PopulateICUMappingCallback(args, settings);
 
   settings.icu_data_path = icu_data_path;
+  
   settings.assets_path = args->assets_path;
   settings.leak_vm = !SAFE_ACCESS(args, shutdown_dart_vm_when_done, false);
 

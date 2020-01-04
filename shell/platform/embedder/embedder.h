@@ -961,6 +961,10 @@ typedef struct {
   ///                directory. This struct member is retained for ABI
   ///                stability.
   const char* packages_path__unused__;
+  /// ICU data to use. Allows the embedder to load ICU data anyway they seem fit.
+  const uint8_t* icu_data;
+  /// The size of the ICU data buffer. 0 if not used.
+  size_t icu_data_size;
   /// The path to the `icudtl.dat` file for the project. The string can be
   /// collected after the call to `FlutterEngineRun` returns. The string must
   /// be NULL terminated.
